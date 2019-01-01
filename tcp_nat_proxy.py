@@ -32,6 +32,9 @@ async def pipe(reader, writer):
 
 async def handle_client(route, local_reader, local_writer):
     try:
+        logger.debug(
+            "Openning connection to {}".format(destination_host_display(route))
+        )
         remote_reader, remote_writer = await asyncio.open_connection(
             route.destination_host, route.destination_port
         )
