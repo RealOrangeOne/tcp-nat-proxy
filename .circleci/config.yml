@@ -1,0 +1,17 @@
+version: 2.0
+
+jobs:
+    build:
+        docker:
+            - image: circleci/python:latest
+        working_directory: ~/dotfiles
+        steps:
+            - checkout
+            - restore_cache:
+                key: cache-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
+            - run: pipenv install --dev
+            - save_cache:
+                key: cache-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
+                paths:
+                    - "/home/circleci/.local/share/virtualenvs"
+            - run: pipenv run test
