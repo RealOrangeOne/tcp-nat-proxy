@@ -2,11 +2,7 @@ import argparse
 import asyncio
 from collections import namedtuple
 
-import uvloop
-
 Route = namedtuple("Route", ["listen_port", "destination_host", "destination_port"])
-
-uvloop.install()
 
 BUFFER_SIZE = 4096
 

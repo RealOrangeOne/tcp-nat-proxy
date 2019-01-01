@@ -10,7 +10,6 @@ flake8 = "*"
 isort = "*"
 
 [packages]
-uvloop = "*"
 
 [requires]
 python_version = "3.7"
