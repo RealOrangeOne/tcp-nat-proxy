@@ -38,8 +38,10 @@ async def handle_client(route, local_reader, local_writer):
         await asyncio.gather(
             pipe(local_reader, remote_writer), pipe(remote_reader, local_writer)
         )
-    except (ConnectionRefusedError, OSError):
-        logger.debug("Connection to {} refused".format(destination_host_display(route)))
+    except (ConnectionRefusedError, OSError) as e:
+        logger.warning(
+            "Connection to {} refused: {}".format(destination_host_display(route), e)
+        )
         pass
     finally:
         local_writer.close()
