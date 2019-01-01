@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 Route = namedtuple("Route", ["listen_port", "destination_host", "destination_port"])
 
-BUFFER_SIZE = 4096
+BUFFER_SIZE = 128 * 1024  # 64kb
 
 FORMAT = "%(levelname)s: %(message)s"
 logging.basicConfig(format=FORMAT)
