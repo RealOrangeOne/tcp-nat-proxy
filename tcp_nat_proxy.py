@@ -26,6 +26,7 @@ async def pipe(reader, writer):
     try:
         while not reader.at_eof():
             writer.write(await reader.read(BUFFER_SIZE))
+            await writer.drain()
     finally:
         writer.close()
 
