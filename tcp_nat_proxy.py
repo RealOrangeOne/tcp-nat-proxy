@@ -1,10 +1,22 @@
+import argparse
 import asyncio
+from collections import namedtuple
 
 import uvloop
+
+Route = namedtuple("Route", ["listen_port", "destination_host", "destination_port"])
 
 uvloop.install()
 
 BUFFER_SIZE = 4096
+
+
+def destination_host_display(route: Route):
+    return "{}:{}".format(route.destination_host, route.destination_port)
+
+
+def parse_argument(value):
+    return Route(*value.split(":"))
 
 
 async def pipe(reader, writer):
@@ -15,26 +27,42 @@ async def pipe(reader, writer):
         writer.close()
 
 
-async def create_proxy_pipe(listen_port, destination_host, destination_port):
+async def create_proxy_pipe(route: Route):
     async def handle_client(local_reader, local_writer):
         try:
             remote_reader, remote_writer = await asyncio.open_connection(
-                destination_host, destination_port
+                route.destination_host, route.destination_port
             )
-            pipe1 = pipe(local_reader, remote_writer)
-            pipe2 = pipe(remote_reader, local_writer)
-            await asyncio.gather(pipe1, pipe2)
+            await asyncio.gather(
+                pipe(local_reader, remote_writer), pipe(remote_reader, local_writer)
+            )
+        except ConnectionRefusedError:
+            print("Connection to {} refused".format(destination_host_display(route)))
+            pass
         finally:
             local_writer.close()
 
-    server = await asyncio.start_server(handle_client, "0.0.0.0", listen_port)
-    print("Serving on {}".format(server.sockets[0].getsockname()))
+    server = await asyncio.start_server(handle_client, "0.0.0.0", route.listen_port)
+    print(
+        "Routing from {} to {}".format(
+            route.listen_port, destination_host_display(route)
+        )
+    )
     await server.wait_closed()
 
 
 async def main():
-    await asyncio.gather(create_proxy_pipe(8888, "127.0.0.1", 8889))
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-R", "--route", action="append", required=True, type=parse_argument
+    )
+    args = parser.parse_args()
+    servers = [create_proxy_pipe(route) for route in args.route]
+    await asyncio.gather(*servers)
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("Process terminated")
